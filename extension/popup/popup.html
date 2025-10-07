@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bold Text Engine</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">✨</div>
+        <h1>Bold Text Engine</h1>
+      </div>
+      <p class="subtitle">Transform your text into stunning styles</p>
+    </div>
+
+    <!-- Text Input -->
+    <div class="input-section">
+      <label for="textInput" class="input-label">Enter your text:</label>
+      <textarea 
+        id="textInput" 
+        placeholder="Type something amazing here..."
+        maxlength="500"
+        rows="3"
+      ></textarea>
+      <div class="char-count">
+        <span id="charCount">0</span>/500
+      </div>
+    </div>
+
+    <!-- Quick Styles -->
+    <div class="styles-section">
+      <h3 class="section-title">Quick Styles</h3>
+      <div class="styles-grid" id="stylesGrid">
+        <!-- Styles will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button id="applyBtn" class="btn btn-primary" disabled>
+        <span class="btn-icon">🎯</span>
+        Apply to Selected Text
+      </button>
+      <button id="copyBtn" class="btn btn-secondary" disabled>
+        <span class="btn-icon">📋</span>
+        Copy to Clipboard
+      </button>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-section" id="previewSection" style="display: none;">
+      <h3 class="section-title">Preview</h3>
+      <div class="preview-box" id="previewBox">
+        <!-- Preview will be shown here -->
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button id="moreStylesBtn" class="link-btn">
+        View All Styles →
+      </button>
+      <button id="settingsBtn" class="link-btn">
+        Settings
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
