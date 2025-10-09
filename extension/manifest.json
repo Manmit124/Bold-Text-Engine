@@ -7,18 +7,13 @@
   "permissions": [
     "activeTab",
     "contextMenus",
-    "storage"
+    "storage",
+    "scripting"
   ],
   
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Bold Text Engine",
-    "default_icon": {
-      "16": "assets/icons/icon-16.png",
-      "32": "assets/icons/icon-32.png",
-      "48": "assets/icons/icon-48.png",
-      "128": "assets/icons/icon-128.png"
-    }
+    "default_title": "Bold Text Engine"
   },
   
   "content_scripts": [
@@ -26,8 +21,6 @@
       "matches": ["<all_urls>"],
       "js": [
         "utils/textConverters.js",
-        "utils/unicodeMaps.js", 
-        "utils/textStyles.js",
         "content/content.js"
       ],
       "run_at": "document_end"
@@ -38,12 +31,6 @@
     "service_worker": "background/background.js"
   },
   
-  "icons": {
-    "16": "assets/icons/icon-16.png",
-    "32": "assets/icons/icon-32.png",
-    "48": "assets/icons/icon-48.png",
-    "128": "assets/icons/icon-128.png"
-  },
   
   "web_accessible_resources": [
     {
@@ -52,3 +39,4 @@
     }
   ]
 }
+

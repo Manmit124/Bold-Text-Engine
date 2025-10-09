@@ -105,9 +105,4 @@ chrome.action.onClicked.addListener((tab) => {
   // This will open the popup automatically due to manifest configuration
 });
 
-// Handle keyboard shortcuts (if needed)
-chrome.commands.onCommand.addListener((command) => {
-  if (command === 'toggle-popup') {
-    chrome.action.openPopup();
-  }
-});
+

@@ -1,12 +1,9 @@
-// Popup functionality for Bold Text Engine Extension
-
-// Import the text conversion functions
-// Note: In extension popup, we need to use a different approach for imports
+// Simplified Popup functionality for Bold Text Engine Extension
 
 class BoldTextPopup {
   constructor() {
     this.selectedStyle = null;
-    this.inputText = '';
+    this.selectedText = '';
     this.quickStyles = [
       'bold-serif',
       'bold-sans', 
@@ -28,33 +25,9 @@ class BoldTextPopup {
   }
 
   setupEventListeners() {
-    // Text input
-    const textInput = document.getElementById('textInput');
-    textInput.addEventListener('input', (e) => {
-      this.inputText = e.target.value;
-      this.updateCharCount();
-      this.updatePreview();
-      this.updateButtons();
-    });
-
     // Apply button
     document.getElementById('applyBtn').addEventListener('click', () => {
       this.applyToSelectedText();
-    });
-
-    // Copy button
-    document.getElementById('copyBtn').addEventListener('click', () => {
-      this.copyToClipboard();
-    });
-
-    // More styles button
-    document.getElementById('moreStylesBtn').addEventListener('click', () => {
-      this.openWebApp();
-    });
-
-    // Settings button
-    document.getElementById('settingsBtn').addEventListener('click', () => {
-      this.openSettings();
     });
   }
 
@@ -110,37 +83,15 @@ class BoldTextPopup {
     }
 
     this.selectedStyle = styleId;
-    this.updatePreview();
-    this.updateButtons();
+    this.updateApplyButton();
   }
 
-  updateCharCount() {
-    const charCount = document.getElementById('charCount');
-    charCount.textContent = this.inputText.length;
-  }
-
-  updatePreview() {
-    const previewSection = document.getElementById('previewSection');
-    const previewBox = document.getElementById('previewBox');
-
-    if (this.inputText && this.selectedStyle) {
-      const convertedText = this.convertText(this.inputText, this.selectedStyle);
-      previewBox.textContent = convertedText;
-      previewSection.style.display = 'block';
-    } else {
-      previewSection.style.display = 'none';
-    }
-  }
-
-  updateButtons() {
+  updateApplyButton() {
     const applyBtn = document.getElementById('applyBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    
-    const hasText = this.inputText.trim().length > 0;
+    const hasText = this.selectedText.trim().length > 0;
     const hasStyle = this.selectedStyle !== null;
 
     applyBtn.disabled = !hasText || !hasStyle;
-    copyBtn.disabled = !hasText || !hasStyle;
   }
 
   async checkForSelectedText() {
@@ -150,24 +101,81 @@ class BoldTextPopup {
       // Get selected text from content script
       const response = await chrome.tabs.sendMessage(tab.id, { action: 'getSelectedText' });
       
-      if (response && response.text) {
-        document.getElementById('textInput').value = response.text;
-        this.inputText = response.text;
-        this.updateCharCount();
-        this.updatePreview();
-        this.updateButtons();
+      console.log('Bold Text Engine Popup: Response from content script:', response);
+      
+      if (response && response.text && response.text.trim()) {
+        this.selectedText = response.text;
+        this.updateSelectedTextDisplay();
+        this.updateApplyButton();
+        this.showMainContent();
+        console.log('Bold Text Engine Popup: Text found:', this.selectedText);
+      } else {
+        this.selectedText = '';
+        this.updateSelectedTextDisplay();
+        this.updateApplyButton();
+        this.showNoSelectionMessage();
+        console.log('Bold Text Engine Popup: No text found');
       }
     } catch (error) {
-      console.log('Could not get selected text:', error);
+      console.log('Bold Text Engine Popup: Could not get selected text:', error);
+      
+      // Fallback: Try to get selected text directly
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          function: () => {
+            const selection = window.getSelection();
+            return selection.toString().trim();
+          }
+        });
+        
+        const selectedText = results[0]?.result;
+        if (selectedText) {
+          this.selectedText = selectedText;
+          this.updateSelectedTextDisplay();
+          this.updateApplyButton();
+          this.showMainContent();
+          console.log('Bold Text Engine Popup: Fallback text found:', this.selectedText);
+        } else {
+          this.showNoSelectionMessage();
+        }
+      } catch (fallbackError) {
+        console.log('Bold Text Engine Popup: Fallback also failed:', fallbackError);
+        this.showNoSelectionMessage();
+      }
     }
   }
 
+  updateSelectedTextDisplay() {
+    const selectedTextElement = document.getElementById('selectedText');
+    const selectedTextContainer = document.getElementById('selectedTextContainer');
+    
+    if (this.selectedText.trim()) {
+      selectedTextElement.textContent = this.selectedText;
+      selectedTextContainer.classList.remove('empty');
+    } else {
+      selectedTextElement.textContent = 'No text selected';
+      selectedTextContainer.classList.add('empty');
+    }
+  }
+
+  showMainContent() {
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('noSelectionMessage').style.display = 'none';
+  }
+
+  showNoSelectionMessage() {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('noSelectionMessage').style.display = 'block';
+  }
+
   async applyToSelectedText() {
-    if (!this.inputText || !this.selectedStyle) return;
+    if (!this.selectedText || !this.selectedStyle) return;
 
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      const convertedText = this.convertText(this.inputText, this.selectedStyle);
+      const convertedText = this.convertText(this.selectedText, this.selectedStyle);
 
       // Send message to content script to replace text
       await chrome.tabs.sendMessage(tab.id, {
@@ -176,7 +184,7 @@ class BoldTextPopup {
       });
 
       // Show success feedback
-      this.showSuccess('Text applied successfully!');
+      this.showSuccess('Text styled successfully!');
       
       // Close popup after short delay
       setTimeout(() => {
@@ -185,34 +193,10 @@ class BoldTextPopup {
 
     } catch (error) {
       console.error('Error applying text:', error);
-      this.showError('Failed to apply text. Please try again.');
+      this.showError('Failed to apply style. Please try again.');
     }
   }
 
-  async copyToClipboard() {
-    if (!this.inputText || !this.selectedStyle) return;
-
-    try {
-      const convertedText = this.convertText(this.inputText, this.selectedStyle);
-      await navigator.clipboard.writeText(convertedText);
-      this.showSuccess('Copied to clipboard!');
-    } catch (error) {
-      console.error('Error copying text:', error);
-      this.showError('Failed to copy text. Please try again.');
-    }
-  }
-
-  openWebApp() {
-    // Open the main web app in a new tab
-    chrome.tabs.create({
-      url: 'https://your-web-app-url.com' // Replace with your actual web app URL
-    });
-  }
-
-  openSettings() {
-    // Open extension options page
-    chrome.runtime.openOptionsPage();
-  }
 
   // Simplified text conversion function for popup
   convertText(text, styleId) {
@@ -298,10 +282,12 @@ class BoldTextPopup {
     
     applyBtn.innerHTML = `<span class="btn-icon">✅</span> ${message}`;
     applyBtn.classList.add('success');
+    applyBtn.disabled = true;
     
     setTimeout(() => {
       applyBtn.innerHTML = originalText;
       applyBtn.classList.remove('success');
+      applyBtn.disabled = false;
     }, 2000);
   }
 
